@@ -1,0 +1,142 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --accent: #8b5cf6;
+    --panel: #252535;
+    --text: #e5e7eb;
+}
+
+html, body {
+    width: 100%;
+    min-height: 100%;
+    background: #242424;
+}
+
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    color: var(--text);
+}
+
+#game {
+    position: relative;
+    width: min(100vw, 177.78vh);
+    width: min(100vw, 177.78svh);
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #242424;
+    isolation: isolate;
+}
+
+#player {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #242424;
+    z-index: 0;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#choice-layer {
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 4rem 5% 5%;
+    background: linear-gradient( to bottom, transparent 0%, rgba(0, 0, 0, 0.45) 28%, rgba(0, 0, 0, 0.9) 100%);
+    text-align: center;
+}
+
+#choice-prompt {
+    max-width: 90%;
+    color: var(--text);
+    font-size: clamp(14px, 2.4vw, 28px);
+    line-height: 1.3;
+    text-wrap: balance;
+}
+
+#choice-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.choice-btn {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 0.65rem;
+    padding: 0.75em 1.2em;
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    font-size: clamp(13px, 1.5vw, 18px);
+    cursor: pointer;
+    transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+#timebar {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 6px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+#timebar-fill {
+    width: 100%;
+    height: 100%;
+    background: var(--accent);
+    transform: scaleX(1);
+    transform-origin: left center;
+}
+
+.screen {
+    position: absolute;
+    z-index: 4;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 2rem;
+    background: var(--overlay);
+    text-align: center;
+}
+
+.big-btn {
+    appearance: none;
+    min-width: 10rem;
+    border: 0;
+    border-radius: 0.75rem;
+    padding: 0.9em 1.8em;
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    font-size: clamp(1rem, 2vw, 1.35rem);
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 160ms ease, transform 160ms ease;
+}
