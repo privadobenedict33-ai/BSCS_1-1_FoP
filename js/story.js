@@ -1,128 +1,76 @@
 /* =====================================================================
-   engine.js - runs the game. It reads the scenes from story.js.
-   You normally do NOT need to edit this file.
+   story.js - the whole story lives here. It is only DATA, no game code.
 
-   HOW IT WORKS (5 sentences)
-   1. The page has ONE <video>.
-   2. goTo("q1") gives that video the clip of scene "q1" and plays it.
-   3. Many times per second, tick() looks at the video's time. When the time
-      reaches the question's "start", the buttons and time bar appear on top.
-   4. Clicking a button (or running out of time) calls goTo() with the next scene.
-   5. Every 2 seconds the game saves the scene + time, so "Continue" works after a refresh.
+   One "scene" = one video clip. The scene name is also the file name:
+   scene "q3a" plays "videos/q3a.mp4".
+
+   NAMES USED
+     intro        the intro video
+     q1 ... q10   a clip where QUESTION 1...10 appears (buttons + time bar)
+     q1a, q1b     the clip played after picking A or B on question 1
+     act5         the long clip with no question
+     ending_good / ending_bad
+
+   EVERY SCENE ENDS IN ONE OF THREE WAYS. Copy a block and change it.
+
+   (A) A question appears while the clip plays:
+       choice: {
+         start: 40,        <- second when the buttons + time bar appear
+         end: 55,          <- second when time runs out
+         prompt: "What do you do?",
+         options: [
+           { text: "Run",  next: "q1a", default: true },  <- default = used if time runs out
+           { text: "Hide", next: "q1b" }
+         ]
+       }
+
+   (B) The clip just continues into another clip:
+       next: "q2"
+       button: "Start"     <- OPTIONAL: show a button and wait for a click first
+
+   (C) The game ends:
+       ending: true,
+       endingTitle: "Good Ending",    <- optional
+       endingText: "You made it."     <- optional
+
+   TODO markers below = replace with the real text / seconds from the editors.
+   (The 4 and 9 are for 10-second placeholder clips, so testing works.)
    ===================================================================== */
 
+const STORY = {
+  start: "intro",
 
-// ---------- (1) Things from index.html that we control ----------
-const video         = document.querySelector("#player");
-//(all the page elements)
+  scenes: {
 
-// ---------- (2) What the game remembers while running ----------
-//(4 variables as said above)
+    // ---------------- INTRO ----------------
+    // After the intro ends, a "Start" button appears, then the story begins.
 
-
-// ---------- SAVING (uses the browser's localStorage) ----------
-const SAVE_KEY = "decisionFilmSave";
-
-function saveGame(id, time) {
-}
-
-function loadGame() {
-}
-
-function clearSave() {
-}
-
-// Save the current spot every 2 seconds while a clip is playing
-setInterval(function () {
-
-
-
-}, 2000);
-
-
-// ---------- PLAY A SCENE ---------- (UNAHIN nyo toh tas yung iba halos optional nga lang eh)
-// id      = the scene name, like "q3a"
-// startAt = second to start from (0 normally, a saved time when continuing)
-
-function goTo(id, startAt) {
-  startAt = startAt || 0;
-
-  hideChoices();
-            // wait until the new clip has loaded
-
-   video.play();
-
-  saveGame(id, startAt);
-  preloadNext();
-}
-
-
-// ---------- PRELOAD: quietly download the clips that could come next ----------
-let preloaders = [];
-
-function preloadNext() {
-  // throw away the old ones to save memory
- }
-
-
-// ---------- THE QUESTION (buttons + time bar over the video) ----------
-function showChoices() {
-
-}
-
-function hideChoices() {
+    // ---------------- QUESTION 1 (Prologue + Act 1) ----------------
  
-}
-
-// The option marked default: true (or the first one if walang napili)
-function defaultOption(choice) {
+    // ---------------- QUESTION 2 (rest of Act 1, shared clip) ----------------
+  
+    // ---------------- QUESTION 3 (Act 2) ----------------
  
-}
+    // ---------------- QUESTION 4 ----------------
+  
+    // ---------------- QUESTION 5 ----------------
 
+    // ---------------- QUESTION 6 (Act 3) ----------------
+   
+    // ---------------- QUESTION 7 (Act 4) ----------------
 
-// ---------- tick(): runs about 60 times per second ----------
-function tick() {
-
- }
-
-
-// ---------- WHEN A CLIP ENDS ----------
-video.onended = function () {
-
-};
-
-
-// ---------- SCREENS ----------
-function showMessage(title, text, buttonLabel, whenClicked) {
-
-    whenClicked();
-
-  messageScreen.classList.remove("hidden");
-}
-
-function showTitle() {
-  video.pause();
-
-
-  hideChoices();
-
-
-  // Only show "Continue" if there is a saved game
-  const save = loadGame();
-
- }
-
-playBtn.onclick = function () {
-  clearSave();                                  // Play = brand new game
-
-};
-
-continueBtn.onclick = function () {
+    // ---------------- QUESTION 8 ----------------
  
-};
 
 
-// ---------- START ----------
-showTitle();
-requestAnimationFrame(tick); 
+    // Both q8 goes to the SAME long Act 5 clip (no question inside it)
+    // ---------------- ACT 5 (no question) ----------------
 
+
+    // ---------------- QUESTION 9 (Act 6) ----------------
+   
+    // ---------------- QUESTION 10 (Act 7, last choice) ----------------
+ 
+    // ---------------- ENDINGS ----------------
+  }
+}
