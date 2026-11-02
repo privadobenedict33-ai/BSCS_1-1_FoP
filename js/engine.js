@@ -55,7 +55,6 @@ function saveGame(id, time) {
 }
 
 function loadGame() {
-  function loadGame() {
   try {
     const text = localStorage.getItem(SAVE_KEY);
 
@@ -70,13 +69,12 @@ function loadGame() {
     console.log("Could not load game:", error);
   }
 }
-}
 
 function clearSave() {
   try{
     const text = localStorage.removeItem(SAVE_KEY);
   }
-  catch{
+  catch (error) {
     console.log("Could not save", error);
   }
   
@@ -98,77 +96,307 @@ function goTo(id, startAt) {
   startAt = startAt || 0;
 
   hideChoices();
-            // wait until the new clip has loaded
 
-   video.play();
+  sceneId = id;
+  scene = STORY.scenes[id];
+  ready = false;
+
+  video.onloadedmetadata = function () {
+    video.currentTime = startAt;
+    ready = true;
+    video.play();
+  };
+
+  video.src = scene.video;
 
   saveGame(id, startAt);
   preloadNext();
 }
 
 
+
 // ---------- PRELOAD: quietly download the clips that could come next ----------
+
 let preloaders = [];
 
 function preloadNext() {
-  // throw away the old ones to save memory
- }
+  for (let i = 0; i < preloaders.length; i++) {
+    document.body.removeChild(preloaders[i]);
+  }
+
+  preloaders = [];
+
+  const nextScenes = [];
+
+  if (scene.next) {
+    nextScenes.push(scene.next);
+  }
+
+  if (scene.choice) {
+
+    for (let i = 0; i < scene.choice.options.length; i++) {
+
+      const option = scene.choice.options[i];
+
+      nextScenes.push(option.next);
+    }
+  }
+
+  for (let i = 0; i < nextScenes.length; i++) {
+
+    const nextId = nextScenes[i];
+
+    const nextScene = STORY.scenes[nextId];
+
+    if (nextScene) {
+
+      const hiddenVideo = document.createElement("video");
+
+      hiddenVideo.preload = "auto";
+      hiddenVideo.src = nextScene.video;
+
+      hiddenVideo.style.display = "none";
+
+      document.body.appendChild(hiddenVideo);
+
+      preloaders.push(hiddenVideo);
+    }
+  }
+}
+
 
 
 // ---------- THE QUESTION (buttons + time bar over the video) ----------
+
 function showChoices() {
+  choiceShown = true;
+
+  const choice = scene.choice;
+
+  choicePrmpt.textContent = choice.prompt;
+
+  choiceBtn.innerHTML = ""; //removs the content of choiceBtn div
+
+  for (let i = 0; i < choice.options.length; i++) {
+
+    const option = choice.options[i];
+
+    const button = document.createElement("button");
+
+    button.className = "choice-btn";
+
+    button.textContent = option.text;
+
+    button.onclick = function () {
+      goTo(option.next);
+    };
+
+    choiceBtn.appendChild(button);
+
+  }
+
+  choiceLayer.classList.remove("hidden");
 
 }
+
 
 function hideChoices() {
- 
+
+  choiceShown = false;
+
+  choiceLayer.classList.add("hidden");
+
+  choiceBtn.innerHTML = "";
+
 }
 
-// The option marked default: true (or the first one if walang napili)
 function defaultOption(choice) {
- 
+
+  for (let i = 0; i < choice.options.length; i++) {
+
+    if (choice.options[i].default === true) {
+
+      return choice.options[i];
+
+    }
+
+  }
+
+  return choice.options[0];
+
 }
 
 
 // ---------- tick(): runs about 60 times per second ----------
+
 function tick() {
 
- }
+  requestAnimationFrame(tick);
+
+  if (!ready || !scene.choice) {
+  return;
+  }
+
+  const choice = scene.choice;
+
+  const time = video.currentTime;
+
+  if (!choiceShown && time >= choice.start) {
+    showChoices();
+  }
+
+  if (choiceShown) {
+
+    const left = choice.end - time;
+
+    const total = choice.end - choice.start;
+
+    barfill.style.transform = "scaleX(" + (left / total) + ")";
+
+    bartxt.textContent = Math.ceil(left) + " seconds";
+
+    if (time >= choice.end - 0.02) {
+
+      const option = defaultOption(choice);
+
+      goTo(option.next);
+
+    }
+  }
+
+}
+
 
 
 // ---------- WHEN A CLIP ENDS ----------
+
 video.onended = function () {
 
+  if (scene.choice) { //this is for going to default when scene end
+
+    const option = defaultOption(scene.choice);
+
+    goTo(option.next);
+
+  }
+
+  else if (scene.ending) { 
+
+    clearSave();
+
+    showMessage(
+      scene.endingTitle,
+      scene.endingText,
+      "Play Again",
+      function () {
+        showTitle();
+      }
+    );
+
+  }
+
+  else if (scene.button) {
+
+    saveGame(scene.next, 0);
+
+    showMessage(
+      "Ready?",
+      "Click Start to continue.",
+      scene.button,
+      function () {
+        goTo(scene.next);
+      }
+    );
+
+  }
+
+  else if (scene.next) {
+
+    goTo(scene.next);
+
+  }
+
 };
+
 
 
 // ---------- SCREENS ----------
 function showMessage(title, text, buttonLabel, whenClicked) {
 
+  msgTitle.textContent = title;
+
+  msgTxt.textContent = text;
+
+  msgBtn.textContent = buttonLabel;
+
+  msgBtn.onclick = function () {
+
+    msgScreen.classList.add("hidden");
+
     whenClicked();
 
-  messageScreen.classList.remove("hidden");
+  };
+
+  msgScreen.classList.remove("hidden");
+
 }
 
 function showTitle() {
+
   video.pause();
 
+  scene = null;
+  sceneId = null;
+  ready = false;
 
   hideChoices();
 
+  msgScreen.classList.add("hidden");
 
-  // Only show "Continue" if there is a saved game
+  title.classList.remove("hidden");
+
   const save = loadGame();
 
- }
+  if (save) {
+    continueBtn.classList.remove("hidden");
+  } else {
+    continueBtn.classList.add("hidden");
+  }
+
+}
 
 playBtn.onclick = function () {
-  clearSave();                                  // Play = brand new game
+
+  clearSave();
+
+  title.classList.add("hidden");
+
+  const params = new URLSearchParams(window.location.search); //since sa instruction, sabi "?scene= value from the address".. i think for debugging lang ba dis?
+
+  const startScene = params.get("scene") || STORY.start;
+
+  goTo(startScene);
 
 };
 
 continueBtn.onclick = function () {
- 
+
+  const save = loadGame();
+
+  if (save) {
+
+    title.classList.add("hidden");
+
+    let startTime = save.time - 2;
+
+    if (startTime < 0) {
+      startTime = 0;
+    }
+
+    goTo(save.scene, startTime);
+
+  }
+
 };
 
 
