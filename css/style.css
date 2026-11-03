@@ -1,3 +1,8 @@
+/* =====================================================================
+   style.css - how everything looks.
+   Lines marked FIX were changed after checking against engine.js.
+   ===================================================================== */
+
 * {
     margin: 0;
     padding: 0;
@@ -8,15 +13,18 @@
     --accent: #8b5cf6;
     --panel: #252535;
     --text: #e5e7eb;
+    /* FIX: .screen used var(--overlay) but it was never defined, so the
+       title screen and message screen had NO background at all. */
+    --overlay: rgba(0, 0, 0, 0.85);
 }
 
 html, body {
     width: 100%;
-    min-height: 100%;
+    height: 100%;              /* FIX: was min-height, so the game could not center vertically */
     background: #242424;
 }
 
-body{
+body {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -44,23 +52,36 @@ body{
     z-index: 0;
 }
 
+/* engine.js shows and hides things by adding/removing this class. Do not remove it. */
 .hidden {
     display: none !important;
 }
 
+/* ---------- Question overlay ---------- */
 #choice-layer {
     position: absolute;
     z-index: 2;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    inset: 0;                      /* FIX: now covers the whole game box. Before, it was only a bottom strip,
+                                      so #timebar's "top: 0" meant the top of that strip, not the top of the screen. */
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-end;     /* FIX: keeps the prompt and buttons at the bottom */
     gap: 1rem;
     padding: 4rem 5% 5%;
-    background: linear-gradient( to bottom, transparent 0%, rgba(0, 0, 0, 0.45) 28%, rgba(0, 0, 0, 0.9) 100%);
     text-align: center;
+}
+
+/* FIX: the dark gradient moved here so it only darkens the bottom 60% of the screen */
+#choice-layer::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 60%;
+    z-index: -1;
+    background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.45) 28%, rgba(0, 0, 0, 0.9) 100%);
 }
 
 #choice-prompt {
@@ -80,6 +101,7 @@ body{
     width: 100%;
 }
 
+/* The A / B buttons are created by engine.js with this class */
 .choice-btn {
     appearance: none;
     border: 1px solid rgba(255, 255, 255, 0.22);
@@ -93,6 +115,14 @@ body{
     transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
+/* FIX (optional polish): the transition above had nothing to animate */
+.choice-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+/* ---------- Time bar ---------- */
 #timebar {
     position: absolute;
     z-index: 3;
@@ -104,6 +134,7 @@ body{
     background: rgba(255, 255, 255, 0.25);
 }
 
+/* engine.js changes this transform every frame. Do NOT add a transition here. */
 #timebar-fill {
     width: 100%;
     height: 100%;
@@ -112,6 +143,13 @@ body{
     transform-origin: left center;
 }
 
+/* FIX: this label had no style at all */
+#timebar-text {
+    font-size: clamp(12px, 1.4vw, 16px);
+    opacity: 0.85;
+}
+
+/* ---------- Title screen + message screen ---------- */
 .screen {
     position: absolute;
     z-index: 4;
@@ -124,6 +162,11 @@ body{
     padding: 2rem;
     background: var(--overlay);
     text-align: center;
+}
+
+/* FIX: solid, so the last frame of an ending never shows through behind the title after "Play Again" */
+#title-screen {
+    background: #242424;
 }
 
 .big-btn {
@@ -139,4 +182,10 @@ body{
     font-weight: 700;
     cursor: pointer;
     transition: filter 160ms ease, transform 160ms ease;
+}
+
+/* FIX (optional polish) */
+.big-btn:hover {
+    filter: brightness(1.15);
+    transform: translateY(-2px);
 }

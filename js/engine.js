@@ -9,6 +9,9 @@
       reaches the question's "start", the buttons and time bar appear on top.
    4. Clicking a button (or running out of time) calls goTo() with the next scene.
    5. Every 2 seconds the game saves the scene + time, so "Continue" works after a refresh.
+
+   Lines marked FIX were added after checking this file against story.js,
+   check.js, index.html and style.css. Everything else is the original work.
    ===================================================================== */
 
 
@@ -29,10 +32,11 @@ const msgTitle = document.querySelector("#msg-title");
 const msgTxt = document.querySelector("#msg-text");
 
 // ---------- (2) What the game remembers while running ----------
-let sceneId;
-let scene;
-let choiceShown;
-let ready;
+// FIX: start with real values instead of undefined
+let sceneId = null;
+let scene = null;
+let choiceShown = false;
+let ready = false;
 
 
 // ---------- SAVING (uses the browser's localStorage) ----------
@@ -48,7 +52,7 @@ function saveGame(id, time) {
     const text = JSON.stringify(data);
     localStorage.setItem(SAVE_KEY, text);
 
-  } 
+  }
   catch(error){
     console.log("Cant save game:");
   }
@@ -67,17 +71,18 @@ function loadGame() {
 
   } catch (error) {
     console.log("Could not load game:", error);
+    return null;   // FIX: before, a broken save returned undefined
   }
 }
 
 function clearSave() {
   try{
-    const text = localStorage.removeItem(SAVE_KEY);
+    localStorage.removeItem(SAVE_KEY);
   }
   catch (error) {
-    console.log("Could not save", error);
+    console.log("Could not clear save", error);   // FIX: message said "save"
   }
-  
+
 }
 
 // Save the current spot every 2 seconds while a clip is playing
@@ -95,6 +100,13 @@ setInterval(function () {
 function goTo(id, startAt) {
   startAt = startAt || 0;
 
+  // FIX: a wrong scene name in story.js used to crash with "Cannot read properties of undefined".
+  // Now it stops and tells you which name is wrong.
+  if (!STORY.scenes[id]) {
+    console.error('goTo: scene "' + id + '" does not exist in story.js');
+    return;
+  }
+
   hideChoices();
 
   sceneId = id;
@@ -104,7 +116,15 @@ function goTo(id, startAt) {
   video.onloadedmetadata = function () {
     video.currentTime = startAt;
     ready = true;
-    video.play();
+
+    // FIX: play() returns a promise. If a quick scene change interrupts it, the browser
+    // printed a red "Uncaught (in promise)" error. This catches it and prints one quiet line.
+    const playing = video.play();
+    if (playing) {
+      playing.catch(function (error) {
+        console.log("play() problem:", error.name);
+      });
+    }
   };
 
   video.src = scene.video;
@@ -233,7 +253,8 @@ function tick() {
 
   requestAnimationFrame(tick);
 
-  if (!ready || !scene.choice) {
+  // FIX: also stop when there is no scene (title screen), so scene.choice is never read on null
+  if (!ready || !scene || !scene.choice) {
   return;
   }
 
@@ -272,6 +293,11 @@ function tick() {
 
 video.onended = function () {
 
+  // FIX: ignore an "ended" event if we are back on the title screen (scene is null)
+  if (!scene) {
+    return;
+  }
+
   if (scene.choice) { //this is for going to default when scene end
 
     const option = defaultOption(scene.choice);
@@ -280,13 +306,13 @@ video.onended = function () {
 
   }
 
-  else if (scene.ending) { 
+  else if (scene.ending) {
 
     clearSave();
 
     showMessage(
-      scene.endingTitle,
-      scene.endingText,
+      scene.endingTitle || "The End",   // FIX: fallback if story.js forgot the text
+      scene.endingText || "",
       "Play Again",
       function () {
         showTitle();
@@ -357,7 +383,8 @@ function showTitle() {
 
   const save = loadGame();
 
-  if (save) {
+  // FIX: only offer Continue if the saved scene still exists in story.js
+  if (save && STORY.scenes[save.scene]) {
     continueBtn.classList.remove("hidden");
   } else {
     continueBtn.classList.add("hidden");
@@ -373,7 +400,12 @@ playBtn.onclick = function () {
 
   const params = new URLSearchParams(window.location.search); //since sa instruction, sabi "?scene= value from the address".. i think for debugging lang ba dis?
 
-  const startScene = params.get("scene") || STORY.start;
+  let startScene = params.get("scene");   // yes: for testing only, e.g. index.html?scene=q5
+
+  // FIX: a misspelled ?scene= value now falls back to the normal start instead of crashing
+  if (!STORY.scenes[startScene]) {
+    startScene = STORY.start;
+  }
 
   goTo(startScene);
 
@@ -383,7 +415,7 @@ continueBtn.onclick = function () {
 
   const save = loadGame();
 
-  if (save) {
+  if (save && STORY.scenes[save.scene]) {   // FIX: same check as showTitle
 
     title.classList.add("hidden");
 
@@ -402,5 +434,4 @@ continueBtn.onclick = function () {
 
 // ---------- START ----------
 showTitle();
-requestAnimationFrame(tick); 
-
+requestAnimationFrame(tick);
